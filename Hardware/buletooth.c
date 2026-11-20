@@ -4,15 +4,30 @@
 /**
   * @brief  发送单个字节到USART1
   */
+//void BLE_SendByte(uint8_t data)
+//{
+//    // 等待发送缓冲区为空
+//    while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
+//    
+//    // 发送数据
+//    USART_SendData(USART1, data);
+//}
 void BLE_SendByte(uint8_t data)
 {
-    // 等待发送缓冲区为空
-    while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
+    uint32_t timeout = 20000; // 设置一个安全的计数上限
     
-    // 发送数据
-    USART_SendData(USART1, data);
+    // 等待发送缓冲区为空，同时加入超时计数
+    while ((USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET) && (timeout > 0))
+    {
+        timeout--;
+    }
+    
+    // 如果是因为超时退出的，说明硬件串口异常，直接放弃发送，防止卡死整个单片机
+    if (timeout > 0)
+    {
+        USART_SendData(USART1, data);
+    }
 }
-
 /**
   * @brief  发送字符串到USART1
   */
@@ -69,8 +84,14 @@ void BLE_SendNumber(int16_t num)
   */
 void BLE_SendFloat(float value, uint8_t decimals)
 {
-    int16_t integer_part = (int16_t)value;
-    float fractional_part = value - integer_part;
+    int16_t integer_part;
+    float fractional_part;
+    uint8_t negative = 0u;
+
+    if (value < 0.0f) { negative = 1u; value = -value; }
+    integer_part = (int16_t)value;
+    fractional_part = value - integer_part;
+    if (negative) BLE_SendByte('-');
     
     // 发送整数部分
     BLE_SendNumber(integer_part);
@@ -86,6 +107,24 @@ void BLE_SendFloat(float value, uint8_t decimals)
         BLE_SendByte(digit + '0');
         fractional_part -= digit;
     }
+}
+
+void BLE_SendAttitudeData(float roll, float pitch, float yaw,
+                          float ax, float ay, float az,
+                          float gx, float gy, float gz,
+                          int16_t mx, int16_t my, int16_t mz,
+                          uint16_t status)
+{
+    BLE_SendString("ATT,"); BLE_SendFloat(roll, 2u); BLE_SendByte(',');
+    BLE_SendFloat(pitch, 2u); BLE_SendByte(','); BLE_SendFloat(yaw, 2u);
+    BLE_SendByte(','); BLE_SendFloat(ax, 3u); BLE_SendByte(',');
+    BLE_SendFloat(ay, 3u); BLE_SendByte(','); BLE_SendFloat(az, 3u);
+    BLE_SendByte(','); BLE_SendFloat(gx, 2u); BLE_SendByte(',');
+    BLE_SendFloat(gy, 2u); BLE_SendByte(','); BLE_SendFloat(gz, 2u);
+    BLE_SendByte(','); BLE_SendNumber(mx); BLE_SendByte(',');
+    BLE_SendNumber(my); BLE_SendByte(','); BLE_SendNumber(mz);
+    BLE_SendByte(','); BLE_SendNumber((int16_t)status);
+    BLE_SendString("\r\n");
 }
 
 /**

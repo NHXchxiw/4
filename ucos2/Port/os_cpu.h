@@ -91,10 +91,8 @@ extern  "C" {                                    /* See Note #1.                
 #define  OS_CPU_EXCEPT_STK_SIZE      256u        /* Default exception stack size is 256 OS_STK entries */
 #endif
 
-#ifndef  __TARGET_FPU_SOFTVFP
-#define  OS_CPU_ARM_FP_EN              0u
-#else
-#define  OS_CPU_ARM_FP_EN              0u
+#ifndef OS_CPU_ARM_FP_EN
+#define OS_CPU_ARM_FP_EN               0u
 #endif
 
 #ifndef CPU_CFG_KA_IPL_BOUNDARY

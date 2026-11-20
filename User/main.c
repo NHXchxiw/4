@@ -3,8 +3,12 @@
 
 int main(void)
 {
-    BSP_Init();
-		
+    /* Enable Cortex-M4F context preservation before the OS initializes. */
+    SCB->CPACR |= (3UL << 20) | (3UL << 22);
+    __DSB();
+    __ISB();
+    FPU->FPCCR |= FPU_FPCCR_ASPEN_Msk | FPU_FPCCR_LSPEN_Msk;
+
     OSInit();
 		
     TaskCreate();

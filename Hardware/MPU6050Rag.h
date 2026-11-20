@@ -1,10 +1,14 @@
-#ifndef __MPU6050_H
-#define __MPU6050_H
+#ifndef __MPU6050_REG_H
+#define __MPU6050_REG_H
 
 #define	MPU6050_SMPLRT_DIV		0x19
 #define	MPU6050_CONFIG			0x1A
 #define	MPU6050_GYRO_CONFIG		0x1B
 #define	MPU6050_ACCEL_CONFIG	0x1C
+#define MPU6050_INT_PIN_CFG      0x37
+#define MPU6050_INT_ENABLE       0x38
+#define MPU6050_INT_STATUS       0x3A
+#define MPU6050_USER_CTRL        0x6A
 
 #define	MPU6050_ACCEL_XOUT_H	0x3B
 #define	MPU6050_ACCEL_XOUT_L	0x3C

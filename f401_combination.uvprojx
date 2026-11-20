@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F401xx,USE_STDPERIPH_DRIVER,HSE_VALUE=8000000</Define>
               <Undefine></Undefine>
-              <IncludePath>.\Library;.\Start;.\System;.\User;.\ucos2\Config;.\ucos2\Port;.\ucos2\Source;.\Hardware</IncludePath>
+              <IncludePath>.\Library;.\Start;.\System;.\User;.\ucos2\Config;.\ucos2\Port;.\ucos2\Source;.\Hardware;.\ANO_Protocol</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -894,6 +894,56 @@
               <FileName>buletooth.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Hardware\buletooth.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
             <File>
               <FileName>MPU6050.c</FileName>
@@ -921,6 +971,16 @@
               <FilePath>.\Hardware\MYI2C.h</FilePath>
             </File>
             <File>
+              <FileName>HMC5883L.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\HMC5883L.c</FilePath>
+            </File>
+            <File>
+              <FileName>HMC5883L.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\HMC5883L.h</FilePath>
+            </File>
+            <File>
               <FileName>USART.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Hardware\USART.c</FilePath>
@@ -929,6 +989,106 @@
               <FileName>USART.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Hardware\USART.h</FilePath>
+            </File>
+            <File>
+              <FileName>usart1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\usart1.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
+            </File>
+            <File>
+              <FileName>usart1.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\usart1.h</FilePath>
+            </File>
+            <File>
+              <FileName>attitude_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\attitude_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>attitude_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\attitude_control.h</FilePath>
+            </File>
+            <File>
+              <FileName>control_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\control_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>control_timer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\control_timer.h</FilePath>
+            </File>
+            <File>
+              <FileName>PID.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\PID.h</FilePath>
+            </File>
+            <File>
+              <FileName>PID.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\PID.c</FilePath>
+            </File>
+            <File>
+              <FileName>DMA.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\DMA.c</FilePath>
+            </File>
+            <File>
+              <FileName>DMA.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\DMA.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -1159,6 +1319,21 @@
               <FileName>includes.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\ucos2\Config\includes.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>ANO_Protocol</GroupName>
+          <Files>
+            <File>
+              <FileName>ANO_Protocol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ANO_Protocol\ANO_Protocol.c</FilePath>
+            </File>
+            <File>
+              <FileName>ANO_Protocol.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\ANO_Protocol\ANO_Protocol.h</FilePath>
             </File>
           </Files>
         </Group>

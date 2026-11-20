@@ -19,6 +19,6 @@ void NVIC_PriorityConfig(void)
     // 设置SysTick为14
     NVIC_SetPriority(SysTick_IRQn, 14);
     
-    // TIM2捕获中断（PPM输入）优先级设为1
-    NVIC_SetPriority(TIM1_CC_IRQn, 1);
+    // TIM1四路接收器PWM输入捕获，与串口同为优先级6
+    NVIC_SetPriority(TIM1_CC_IRQn, 6);
 }

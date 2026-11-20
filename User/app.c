@@ -1,129 +1,183 @@
 #include "stm32f4xx.h"
 #include "app.h"
+#include "BSP.h"
+#include "USART.h"
+#include "attitude_control.h"
+#include "ANO_Protocol.h"
+#include "PID.h"
 
-// 任务堆栈
-#define TASK_START_STK_SIZE  128
-#define TASK_PPM_STK_SIZE    128
-#define TASK_MOTOR_STK_SIZE  128
-#define TASK_LED_STK_SIZE    128
+#define TASK_START_STK_SIZE  128u
+#define TASK_PPM_STK_SIZE    128u
+#define TASK_MOTOR_STK_SIZE  128u
+#define TASK_GY86_STK_SIZE   768u
 
 OS_STK TaskStartStk[TASK_START_STK_SIZE];
 OS_STK TaskPPMStk[TASK_PPM_STK_SIZE];
 OS_STK TaskMotorStk[TASK_MOTOR_STK_SIZE];
-OS_STK TaskGY86Stk[TASK_LED_STK_SIZE];
+OS_STK TaskGY86Stk[TASK_GY86_STK_SIZE];
 
-// 任务优先级定义
-#define TASK_START_PRIO      5
-#define TASK_PPM_PRIO        6      // PPM处理优先级较高，保证实时响应
-#define TASK_MOTOR_PRIO      7      // 电机控制优先级适中
-#define TASK_GY86_PRIO        8      // LED闪烁优先级最低
+#define TASK_START_PRIO      5u
+#define TASK_PPM_PRIO        6u
+#define TASK_MOTOR_PRIO      7u
+#define TASK_GY86_PRIO       8u
 
-// 外部变量声明 - 引用ppm.c中定义的变量
+
+
 extern volatile uint16_t ppm_channels[8];
-extern volatile uint8_t  ppm_frame_ready;
+extern volatile uint8_t ppm_frame_ready;
+volatile uint16_t g_motor_pulse = 1000u;
+float motor[4];
+float throttle=500;
+Attitude_Data sample;
 
-// 内部全局变量
-volatile uint16_t g_motor_pulse = 1000;  // 电机脉宽，默认1000us（怠速）
 
 
+static uint32_t Attitude_NowUs(void)
+{
+    static uint32_t last_cycles;
+    static uint32_t elapsed_us;
+    static uint32_t remainder;
+    uint32_t cycles_per_us = SystemCoreClock / 1000000u;
+    uint32_t current = DWT->CYCCNT;
+    uint32_t delta = current - last_cycles;
 
-int16_t AccX, AccY, AccZ;
-int16_t GyroX, GyroY, GyroZ;
+    last_cycles = current;
+    if (cycles_per_us == 0u) cycles_per_us = 1u;
+    /* Accumulate deltas before conversion: CYCCNT wraps about every 51 s
+     * at 84 MHz. The filter and protocol need continuous microseconds. */
+    elapsed_us += delta / cycles_per_us;
+    remainder += delta % cycles_per_us;
+    elapsed_us += remainder / cycles_per_us;
+    remainder %= cycles_per_us;
+    return elapsed_us;
+}
+
 
 void TaskCreate(void)
 {
-    OSTaskCreate(TaskStart,
-                 (void *)0,
-                 &TaskStartStk[TASK_START_STK_SIZE - 1u],
-                 APP_CFG_STARTUP_TASK_PRIO);
+    OSTaskCreate(TaskStart, (void *)0,
+                 &TaskStartStk[TASK_START_STK_SIZE - 1u], APP_CFG_STARTUP_TASK_PRIO);
 }
 
-
-static void TaskStart(void *p_arg)
+void TaskStart(void *p_arg)
 {
     (void)p_arg;
-	
-	
-	ESC_SetThrottle(1000);
-	
-    OS_CPU_SysTickInitFreq(SystemCoreClock); 
+    BSP_Init();
+//    ESC_StopAll(); /* Requires PWM_Init() in BSP_Init(). */
+    OS_CPU_SysTickInitFreq(SystemCoreClock);
 
-    // 创建任务
-    OSTaskCreate(TaskPPM, (void *)0,
-                 &TaskPPMStk[TASK_PPM_STK_SIZE-1],
-                 TASK_PPM_PRIO);
-    
-    OSTaskCreate(TaskMotor, (void *)0,
-                 &TaskMotorStk[TASK_MOTOR_STK_SIZE-1],
-                 TASK_MOTOR_PRIO);
-    
-	OSTaskCreate(TaskGY86, (void *)0,
-                 &TaskGY86Stk[TASK_MOTOR_STK_SIZE-1],
-                 TASK_GY86_PRIO);
-	
-	//删除自身
+//    OSTaskCreate(TaskPPM, (void *)0, &TaskPPMStk[TASK_PPM_STK_SIZE - 1u], TASK_PPM_PRIO);
+//    OSTaskCreate(TaskMotor, (void *)0, &TaskMotorStk[TASK_MOTOR_STK_SIZE - 1u], TASK_MOTOR_PRIO);
+    OSTaskCreate(TaskGY86, (void *)0, &TaskGY86Stk[TASK_GY86_STK_SIZE - 1u], TASK_GY86_PRIO);
     OSTaskDel(OS_PRIO_SELF);
 }
 
-static void TaskPPM(void *pdata)
-{
+
+
+//void TaskPPM(void *pdata)
+//{
+//    uint16_t channels[PPM_CHANNEL_COUNT];
+//    uint16_t throttle;
+//    uint8_t valid_mask;
+//    (void)pdata;
+//    while (1)
+//    {
+//        /* Poll even without a new group, so lost inputs expire after 100 ms. */
+//        valid_mask = PPM_ReadChannels(channels);
+//        throttle = ESC_PULSE_STOP;
+//        if (valid_mask == PPM_ALL_CHANNELS_MASK &&
+//            throttle_channel >= 1u && throttle_channel <= PPM_CHANNEL_COUNT)
+//        {
+//            throttle = channels[throttle_channel - 1u];
+//            if (throttle < 1000u) throttle = 1000u;
+//            if (throttle > 2000u) throttle = 2000u;
+//        }
+//        g_motor_pulse = throttle;
+//        OSTimeDlyHMSM(0, 0, 0, 5);
+//    }
+//}
+
+void TaskMotor(void *pdata){
     (void)pdata;
-	
-    #if OS_CRITICAL_METHOD == 3
-    OS_CPU_SR cpu_sr;    // 为临界区方法3声明的状态保存变量
-	#endif
-	
-    while(1)
+	Angle_Rate_Init();
+    while (1){
+
+    }
+}
+
+/* One task owns the bit-banged I2C bus. The scheduler is locked only during
+ * the transaction and filter update; serial output happens after unlocking. */
+void TaskGY86(void *pdata)
+{
+    uint8_t print_div = 0u;
+    uint32_t now_us;
+    (void)pdata;
+
+    OSSchedLock();
+    (void)Attitude_Init();
+    OSSchedUnlock();
+//    BLE_SendString("ATT,boot\r\n");
+
+    while (1)
     {
-        if(ppm_frame_ready)
+        now_us = Attitude_NowUs();
+        OSSchedLock();
+        (void)Attitude_Step(now_us);
+        Attitude_GetData(&sample);
+        OSSchedUnlock();
+
+        ANO_Protocol_Process(now_us);
+
+        /* 200 Hz update, 20 Hz UART telemetry (115200 baud cannot carry a
+         * complete formatted line at 200 Hz without delaying the estimator). */
+        if (++print_div >= 10u)
         {
-            uint16_t throttle;
-            
-            // μC/OS-II 临界区保护
-            OS_ENTER_CRITICAL();
-            
-            throttle = ppm_channels[2];
-            ppm_frame_ready = 0;  // 清零标志
-            
-            // 退出临界区
-            OS_EXIT_CRITICAL();
-            
-            if(throttle < 1000) throttle = 1000;
-            if(throttle > 2000) throttle = 2000;
-            
-            g_motor_pulse = throttle;
+            print_div = 0u;
+            ANO_Protocol_SendTelemetry(&sample);
         }
-        
         OSTimeDlyHMSM(0, 0, 0, 5);
     }
 }
 
-// 电机控制任务 - 输出PWM控制信号
-void TaskMotor(void *pdata)
-{
-    (void)pdata;
-    
-    while(1)
-    {
-        // 直接设置电机输出
-        ESC_SetThrottle(g_motor_pulse);
-        
-        // 20ms控制周期，符合50Hz PWM要求
-        OSTimeDlyHMSM(0, 0, 0, 20);
-    }
+void angle_loop(void){
+	roll_rate_target =
+			Angle_P_Update(roll_angle_target,
+						  sample.angle.roll,
+						  roll_angle_kp,
+						  roll_rate_limit);
+	pitch_rate_target =
+			Angle_P_Update(pitch_angle_target,
+						  sample.angle.pitch,
+						  pitch_angle_kp,
+						  pitch_rate_limit);
+	yaw_rate_target =
+			Angle_P_Update(yaw_angle_target,
+						  sample.angle.yaw,
+						  yaw_angle_kp,
+						  yaw_rate_limit);
 }
 
-void TaskGY86(void *pdata){
-	
-	(void)pdata;
-	
-	while(1){
-		// 读取MPU6050数据
-		MPU6050_GetData(&AccX, &AccY, &AccZ, &GyroX, &GyroY, &GyroZ);
-		
-		// 发送格式化的姿态数据
-		BLE_SendMPU6050Data(AccX, AccY, AccZ, GyroX, GyroY, GyroZ);
-		OSTimeDlyHMSM(0, 0, 0, 50);  // 延时50毫秒
-	}
+void rate_loop(void){
+	roll->output =
+			Rate_PID_Update(roll,
+						   roll_rate_target,
+						   sample.gyro_dps.x,
+						   sample.dt);
+	pitch->output =
+			Rate_PID_Update(pitch,
+						   pitch_rate_target,
+						   sample.gyro_dps.y,
+						   sample.dt);
+	yaw->output =
+			Rate_PID_Update(yaw,
+						   yaw_rate_target,
+						   sample.gyro_dps.z,
+						   sample.dt);
 }
 
+void mix_and_output(void){
+	motor[0] = throttle + roll->output + pitch->output - yaw->output;//��һ����
+	motor[1] = throttle - roll->output + pitch->output + yaw->output;//�ڶ�����
+	motor[2] = throttle + roll->output - pitch->output + yaw->output;//��������
+	motor[3] = throttle - roll->output - pitch->output - yaw->output;//��������
+}
