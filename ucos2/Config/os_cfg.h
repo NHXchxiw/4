@@ -110,7 +110,7 @@
 
 
                                        /* ---------------------- 消息队列 ---------------------- */
-#define OS_Q_EN                   0u   /* 启用 (1) 或禁用 (0) 队列的代码生成 */
+#define OS_Q_EN                   1u   /* 启用 (1) 或禁用 (0) 队列的代码生成 */
 #define OS_Q_ACCEPT_EN            1u   /*     包含 OSQAccept() 的代码 */
 #define OS_Q_DEL_EN               1u   /*     包含 OSQDel() 的代码 */
 #define OS_Q_FLUSH_EN             1u   /*     包含 OSQFlush() 的代码 */

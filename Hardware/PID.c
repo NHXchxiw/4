@@ -1,6 +1,23 @@
 #include "stm32f4xx.h"                  // Device header
 #include "PID.h"
 
+
+float roll_rate_target=0.0f;
+float pitch_rate_target=0.0f;
+float yaw_rate_target=0.0f;
+
+float roll_angle_target=0.0f;
+float pitch_angle_target=0.0f;
+float yaw_angle_target=0.0f;
+
+float roll_angle_kp=0.0f;
+float pitch_angle_kp=0.0f;
+float yaw_angle_kp=0.0f;
+
+float roll_rate_limit=0.0f;
+float pitch_rate_limit=0.0f;
+float yaw_rate_limit=0.0f;
+
 /* 实际存储PID参数和运行状态的三个对象 */
 static PID_Controller roll_pid;
 static PID_Controller pitch_pid;

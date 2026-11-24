@@ -331,8 +331,6 @@ uint8_t MPU6050_ReadRawDMA_Start(uint8_t *buffer){
     OS_EXIT_CRITICAL();
 
 
-    /* ---------- 12. 启动成功，立即返回 ---------- */
-
     return 1u;
 
 
@@ -345,7 +343,7 @@ start_failed:
 
 
 //判断接收成功或失败、结束传输，并通过信号量唤醒采集任
-void DMA1_Steam0_IRQHandler(void){
+void DMA1_Stream0_IRQHandler(void){
 	uint8_t transfer_complete;
     uint8_t dma_error;
     uint8_t receive_ok;
@@ -411,15 +409,109 @@ void DMA1_Steam0_IRQHandler(void){
 			//通知采集任务结果
 			if(ImuDmaDoneSem!=((OS_EVENT*)0)){
 				(void)OSSemPost(ImuDmaDoneSem);//void显示丢弃返回值
-			}else{
-				DMA_ClearFlag(DMA1_Stream0,IMU_DMA_ALL_FLAGS);
 			}
-			
-			OSIntExit();
-			
-	
+		}else{
+			DMA_ClearFlag(DMA1_Stream0,IMU_DMA_ALL_FLAGS);
 		}
 	}
 					
 
+	OSIntExit();
+}
+
+uint8_t IMU_DMA_WaitComplete(uint32_t timeout_ticks){
+	INT8U err;
+	uint32_t start_cycles;
+	
+	if(ImuDmaDoneSem==(OS_EVENT*)0||
+		timeout_ticks==0){
+		return 0;
+	}
+	//阻塞等待通知
+	OSSemPend(ImuDmaDoneSem,timeout_ticks,&err);
+	if(err!=OS_ERR_NONE||
+		ImuDmaState!=IMU_DMA_DONE){
+		goto failed;
+	}
+	
+	start_cycles = DWT->CYCCNT;
+	while(DMA_GetCmdStatus(DMA1_Stream0)!=DISABLE){
+		if(IMU_DMA_StartTimedOut(start_cycles)){
+			goto failed;
+		}
+	}
+	if(!IMU_DMA_WaitBusIdle(start_cycles)){
+		goto failed;
+	}
+	
+	
+	__DMB();
+
+	ImuDmaState = IMU_DMA_IDLE;
+    return 1u;
+	
+	failed:
+	(void)IMU_DMA_Abort();
+	return 0;
+
+}
+uint8_t IMU_DMA_Abort(void){
+	OS_CPU_SR cpu_sr;
+    uint32_t start_cycles;
+	
+	OS_ENTER_CRITICAL();
+	
+	ImuDmaState=IMU_DMA_ERROR;
+	I2C_DMACmd(I2C1, DISABLE);
+	DMA_ITConfig(DMA1_Stream0,
+                 DMA_IT_TC | DMA_IT_TE | DMA_IT_DME,
+                 DISABLE);//屏蔽DMA中断源，防止中断改状态
+	DMA_Cmd(DMA1_Stream0,DISABLE);
+	
+	OS_EXIT_CRITICAL();
+	
+	
+	//有限等待DMA停止
+	start_cycles = DWT->CYCCNT;
+
+    while (DMA_GetCmdStatus(DMA1_Stream0) != DISABLE){
+        if (IMU_DMA_StartTimedOut(start_cycles)){
+            return 0u;
+        }
+    }
+	//结束I2C接收配置
+	I2C_AcknowledgeConfig(I2C1, DISABLE);
+	if ((I2C1->SR2 & I2C_SR2_MSL) != 0u){
+        I2C_GenerateSTOP(I2C1, ENABLE);
+    }
+    I2C_DMALastTransferCmd(I2C1, DISABLE);
+	
+	//DMA已经停止，清残余标志
+	DMA_ClearFlag(DMA1_Stream0, IMU_DMA_ALL_FLAGS);
+    NVIC_ClearPendingIRQ(DMA1_Stream0_IRQn);
+	
+	//清完成通知
+	if(ImuDmaDoneSem!=(OS_EVENT*)0){
+		while(OSSemAccept(ImuDmaDoneSem)!=0){}
+	}
+	
+	//恢复I2C总线和外设配置
+	if(!MYI2C_Recover()){
+		return 0;
+	}
+	
+	start_cycles = DWT->CYCCNT;
+	if (!IMU_DMA_WaitBusIdle(start_cycles)){
+        return 0;
+    }
+	
+	
+	OS_ENTER_CRITICAL();
+    ImuDmaState = IMU_DMA_IDLE;
+    DMA_ITConfig(DMA1_Stream0,
+                 DMA_IT_TC | DMA_IT_TE | DMA_IT_DME,
+                 ENABLE);
+    OS_EXIT_CRITICAL();
+	
+	return 1;
 }

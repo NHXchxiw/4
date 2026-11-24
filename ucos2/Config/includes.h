@@ -6,5 +6,6 @@
 #include "app_cfg.h"
 
 #include "PID.h"
+#include "DMA.h"
 
 #endif

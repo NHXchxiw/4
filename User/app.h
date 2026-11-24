@@ -19,6 +19,11 @@ typedef struct
     uint32_t sequence;          // 继承原始样本序号
 } FlightFrame;
 
+extern OS_EVENT *ImudataReadySem;
+
+extern volatile uint32_t ImuReadyCycles;
+extern volatile uint32_t ImuReadySequence;
+
 /*
 *********************************************************************************************************
 *                                        FUNCTION PROTOTYPES
@@ -27,9 +32,12 @@ typedef struct
 
 void TaskCreate(void);
 void TaskStart(void *pdata);
-void TaskPPM(void *pdata);
-void TaskMotor(void *pdata);
-void TaskGY86(void *pdata);
+
+void TaskSensorRead(void *pdata);
+void TaskAttitudeEstimate(void *pdata);
+void TaskFlightControl(void *pdata);
+void TaskTelemetry(void *pdata);
+
 void angle_loop(void);
 void rate_loop(void);
 void mix_and_output(void);

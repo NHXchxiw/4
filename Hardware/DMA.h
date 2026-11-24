@@ -34,6 +34,9 @@ void IMU_DMA_Init(void);
  * 只能由统一管理I2C1的采集任务调用。
  * buffer至少有14字节，且DMA完成前必须保持有效。
  */
-uint8_t MPU6050_ReadRawDMA_Start(uint8_t *buffer);
+extern uint8_t MPU6050_ReadRawDMA_Start(uint8_t *buffer);
+
+uint8_t IMU_DMA_WaitComplete(uint32_t timeout_ticks);
+uint8_t IMU_DMA_Abort(void);
 
 #endif

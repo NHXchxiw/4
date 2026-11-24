@@ -21,7 +21,7 @@ OS_STK TaskGY86Stk[TASK_GY86_STK_SIZE];
 #define TASK_MOTOR_PRIO      7u
 #define TASK_GY86_PRIO       8u
 
-
+OS_EVENT *ImudataReadySem = (OS_EVENT *)0;
 
 extern volatile uint16_t ppm_channels[8];
 extern volatile uint8_t ppm_frame_ready;
@@ -68,7 +68,7 @@ void TaskStart(void *p_arg)
 
 //    OSTaskCreate(TaskPPM, (void *)0, &TaskPPMStk[TASK_PPM_STK_SIZE - 1u], TASK_PPM_PRIO);
 //    OSTaskCreate(TaskMotor, (void *)0, &TaskMotorStk[TASK_MOTOR_STK_SIZE - 1u], TASK_MOTOR_PRIO);
-    OSTaskCreate(TaskGY86, (void *)0, &TaskGY86Stk[TASK_GY86_STK_SIZE - 1u], TASK_GY86_PRIO);
+    OSTaskCreate(TaskSensorRead, (void *)0, &TaskGY86Stk[TASK_GY86_STK_SIZE - 1u], TASK_GY86_PRIO);
     OSTaskDel(OS_PRIO_SELF);
 }
 
@@ -107,36 +107,20 @@ void TaskMotor(void *pdata){
 
 /* One task owns the bit-banged I2C bus. The scheduler is locked only during
  * the transaction and filter update; serial output happens after unlocking. */
-void TaskGY86(void *pdata)
-{
-    uint8_t print_div = 0u;
-    uint32_t now_us;
-    (void)pdata;
+void TaskSensorRead(void *pdata){
+	INT8U err;
+	for(;;){
+		OSSemPend(ImudataReadySem,ready_timeout,&err);
+		if(err!=OS_ERR_NONE){
+			continue;
+		}
 
-    OSSchedLock();
-    (void)Attitude_Init();
-    OSSchedUnlock();
-//    BLE_SendString("ATT,boot\r\n");
+		if(!MPU6050_ReadRawDMA_Start(imu_dma_rx)){
+			IMU_DMA_WaitComplete(3u);
+			continue;
+		}
 
-    while (1)
-    {
-        now_us = Attitude_NowUs();
-        OSSchedLock();
-        (void)Attitude_Step(now_us);
-        Attitude_GetData(&sample);
-        OSSchedUnlock();
-
-        ANO_Protocol_Process(now_us);
-
-        /* 200 Hz update, 20 Hz UART telemetry (115200 baud cannot carry a
-         * complete formatted line at 200 Hz without delaying the estimator). */
-        if (++print_div >= 10u)
-        {
-            print_div = 0u;
-            ANO_Protocol_SendTelemetry(&sample);
-        }
-        OSTimeDlyHMSM(0, 0, 0, 5);
-    }
+	}
 }
 
 void angle_loop(void){

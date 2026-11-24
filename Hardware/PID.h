@@ -44,21 +44,21 @@ extern PID_Controller *roll;
 extern PID_Controller *pitch;
 extern PID_Controller *yaw;
 
-extern float roll_rate_target=0.0f;
-extern float pitch_rate_target=0.0f;
-extern float yaw_rate_target=0.0f;
+extern float roll_rate_target;
+extern float pitch_rate_target;
+extern float yaw_rate_target;
 
-extern float roll_angle_target=0.0f;
-extern float pitch_angle_target=0.0f;
-extern float yaw_angle_target=0.0f;
+extern float roll_angle_target;
+extern float pitch_angle_target;
+extern float yaw_angle_target;
 
-extern float roll_angle_kp=0.0f;
-extern float pitch_angle_kp=0.0f;
-extern float yaw_angle_kp=0.0f;
+extern float roll_angle_kp;
+extern float pitch_angle_kp;
+extern float yaw_angle_kp;
 
-extern float roll_rate_limit=0.0f;
-extern float pitch_rate_limit=0.0f;
-extern float yaw_rate_limit=0.0f;
+extern float roll_rate_limit;
+extern float pitch_rate_limit;
+extern float yaw_rate_limit;
 
 
 
